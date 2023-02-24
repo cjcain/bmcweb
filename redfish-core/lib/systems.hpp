@@ -1543,7 +1543,7 @@ inline void getPowerMode(const std::shared_ptr<bmcweb::AsyncResp>& aResp)
 
             if (safeMode != nullptr)
             {
-                aResp->res.jsonValue["SafeMode"]["SafeMode"] = *safeMode;
+                aResp->res.jsonValue["Oem"]["IBM"]["SafeMode"] = *safeMode;
             }
             if (powerMode != nullptr)
             {
