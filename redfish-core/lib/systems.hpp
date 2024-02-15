@@ -2182,43 +2182,74 @@ inline computer_system::PowerMode
 {
     using PowerMode = computer_system::PowerMode;
 
-    if (modeValue == "xyz.openbmc_project.Control.Power.Mode.PowerMode.Static")
+    if (modeString == "xyz.openbmc_project.Control.Power.Mode.PowerMode.Static")
     {
-        asyncResp->res.jsonValue["PowerMode"] = PowerMode::Static;
+        return PowerMode::Static;
     }
     if (modeString ==
         "xyz.openbmc_project.Control.Power.Mode.PowerMode.MaximumPerformance")
     {
-        asyncResp->res.jsonValue["PowerMode"] = PowerMode::MaximumPerformance;
+        return PowerMode::MaximumPerformance;
     }
     if (modeString ==
         "xyz.openbmc_project.Control.Power.Mode.PowerMode.PowerSaving")
     {
-        asyncResp->res.jsonValue["PowerMode"] = PowerMode::PowerSaving;
-    }
-    else if (
-        modeValue ==
-        "xyz.openbmc_project.Control.Power.Mode.PowerMode.BalancedPerformance")
-    {
-        asyncResp->res.jsonValue["PowerMode"] = PowerMode::BalancedPerformance;
-    }
-    else if (
-        modeValue ==
-        "xyz.openbmc_project.Control.Power.Mode.PowerMode.EfficiencyFavorPerformance")
-    {
-        asyncResp->res.jsonValue["PowerMode"] =
-            PowerMode::EfficiencyFavorPerformance;
-    }
-    else if (
-        modeValue ==
-        "xyz.openbmc_project.Control.Power.Mode.PowerMode.EfficiencyFavorPower")
-    {
-        asyncResp->res.jsonValue["PowerMode"] = PowerMode::EfficiencyFavorPower;
+        return PowerMode::PowerSaving;
     }
     if (modeString ==
         "xyz.openbmc_project.Control.Power.Mode.PowerMode.BalancedPerformance")
     {
-        asyncResp->res.jsonValue["PowerMode"] = PowerMode::OEM;
+        return PowerMode::BalancedPerformance;
+    }
+    if (modeString ==
+        "xyz.openbmc_project.Control.Power.Mode.PowerMode.EfficiencyFavorPerformance")
+    {
+        return PowerMode::EfficiencyFavorPerformance;
+    }
+    if (modeString ==
+        "xyz.openbmc_project.Control.Power.Mode.PowerMode.EfficiencyFavorPower")
+    {
+        return PowerMode::EfficiencyFavorPower;
+    }
+    if (modeString == "xyz.openbmc_project.Control.Power.Mode.PowerMode.OEM")
+    {
+        return PowerMode::OEM;
+    }
+    // Any other values would be invalid
+    BMCWEB_LOG_ERROR("PowerMode value was not valid: {}", modeString);
+    return PowerMode::Invalid;
+}
+
+inline void
+    afterGetPowerMode(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
+                      const boost::system::error_code& ec,
+                      const dbus::utility::DBusPropertiesMap& properties)
+{
+    if (ec)
+    {
+        BMCWEB_LOG_ERROR("DBUS response error on PowerMode GetAll: {}", ec);
+        messages::internalError(asyncResp->res);
+        return;
+    }
+
+    std::string powerMode;
+    const std::vector<std::string>* allowedModes = nullptr;
+    const bool success = sdbusplus::unpackPropertiesNoThrow(
+        dbus_utils::UnpackErrorPrinter(), properties, "PowerMode", powerMode,
+        "AllowedPowerModes", allowedModes);
+
+    if (!success)
+    {
+        messages::internalError(asyncResp->res);
+        return;
+    }
+
+    nlohmann::json::array_t modeList;
+    if (allowedModes == nullptr)
+    {
+        modeList.emplace_back("Static");
+        modeList.emplace_back("MaximumPerformance");
+        modeList.emplace_back("PowerSaving");
     }
     else
     {
