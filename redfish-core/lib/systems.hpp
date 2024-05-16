@@ -2234,9 +2234,10 @@ inline void
 
     std::string powerMode;
     const std::vector<std::string>* allowedModes = nullptr;
+    bool safeMode;
     const bool success = sdbusplus::unpackPropertiesNoThrow(
         dbus_utils::UnpackErrorPrinter(), properties, "PowerMode", powerMode,
-        "AllowedPowerModes", allowedModes);
+        "AllowedPowerModes", allowedModes, "SafeMode", safeMode);
 
     if (!success)
     {
@@ -2276,6 +2277,12 @@ inline void
         return;
     }
     asyncResp->res.jsonValue["PowerMode"] = modeValue;
+
+    BMCWEB_LOG_DEBUG("Safe mode: {}", safeMode);
+    nlohmann::json& oemSafeMode = asyncResp->res.jsonValue["Oem"];
+    oemSafeMode["@odata.type"] = "#OemComputerSystem.Oem";
+    oemSafeMode["IBM"]["@odata.type"] = "#OemComputerSystem.IBM";
+    oemSafeMode["IBM"]["SafeMode"] = safeMode;
 }
 /**
  * @brief Retrieves system power mode
