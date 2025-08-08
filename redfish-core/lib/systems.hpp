@@ -1548,7 +1548,11 @@ inline void
     if (ec)
     {
         BMCWEB_LOG_ERROR("DBUS response error on PowerMode GetAll: {}", ec);
-        messages::internalError(asyncResp->res);
+        // Don't return an error on timeout (since it should eventually recover)
+        if(ec != boost::system::errc::timed_out)
+        {
+            messages::internalError(asyncResp->res);
+        }
         return;
     }
 
@@ -2064,7 +2068,11 @@ inline void
                 BMCWEB_LOG_ERROR(
                     "DBUS response error on Power.IdlePowerSaver GetSubTree {}",
                     ec);
-                messages::internalError(asyncResp->res);
+                // Don't return an error on timeout (since it should eventually recover)
+                if(ec != boost::system::errc::timed_out)
+                {
+                    messages::internalError(asyncResp->res);
+                }
                 return;
             }
             if (subtree.empty())
