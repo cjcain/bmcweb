@@ -592,12 +592,6 @@ class Connection :
 
                 std::string_view expect =
                     parser->get()[boost::beast::http::field::expect];
-                if (bmcweb::asciiIEquals(expect, "100-continue"))
-                {
-                    res.result(boost::beast::http::status::continue_);
-                    doWrite();
-                    return;
-                }
 
                 if (!handleContentLengthError())
                 {
@@ -605,6 +599,13 @@ class Connection :
                 }
 
                 parser->body_limit(getContentLengthLimit());
+
+                if (bmcweb::asciiIEquals(expect, "100-continue"))
+                {
+                    res.result(boost::beast::http::status::continue_);
+                    doWrite();
+                    return;
+                }
 
                 if (parser->is_done())
                 {
